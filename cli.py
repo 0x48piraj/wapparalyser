@@ -106,7 +106,7 @@ if args.update:
 
 # Local Load
 print("Loading AliasIO/Wappalyzer JSON ...")
-with open('apps.json') as f:
+with open('src/apps.json') as f:
     data = json.load(f)
 
 def tryLoad(file):

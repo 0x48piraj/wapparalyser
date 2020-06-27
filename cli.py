@@ -2,13 +2,12 @@
 import json
 from pprint import pprint
 import rstr # https://bitbucket.org/leapfrogdevelopment/rstr/src
-import re
+import re, random
 import os, sys, argparse, textwrap, requests, datetime, operator
 import urllib.request
 
 if sys.platform.lower() == "win32":
     os.system('color')
-  # Group of Different functions for different styles
     class style():
         BLACK = lambda x: '\033[30m' + str(x)
         RED = lambda x: '\033[31m' + str(x)
@@ -40,13 +39,20 @@ banner = textwrap.dedent('''\
     '==================================================================='
     ''')
 
+def tryLoad(file):
+    try:
+        return open(file.strip(), 'w')
+    except:
+        print(style.RED('Permission Denied: {}'.format(file)) + style.RESET(''))
+        sys.exit(0)
+
 def UpdateJSON():
     blob_url = "https://raw.githubusercontent.com/AliasIO/Wappalyzer/master/src/apps.json"
     try:
         urllib.request.urlretrieve(blob_url, 'src/apps.json')
-        print("[+] Updated the source from AliasIO/Wappalyzer ...")
+        print(style.GREEN("[+] Updated the source from AliasIO/Wappalyzer ...") + style.RESET(''))
     except Exception as e:
-        print("Error: {}\nExiting.".format(e))
+        print(style.RED("Error: {}\nExiting.".format(e)) + style.RESET(''))
         sys.exit(1)
 
 def get_data(service): # I think I was drunk o_O
@@ -88,7 +94,7 @@ optional = parser.add_argument_group('Options')
 optional.add_argument("-f", "--fuzz-all", dest="fuzz", action='store_true', help= style.GREEN("Fuzzing Wappalyzer") + style.RESET(''))
 optional.add_argument("-r", "--random", dest="random", action='store_true', help= style.GREEN("Emulate random services") + style.RESET(''))
 optional.add_argument("-l", "--list-all", dest="list_all", action='store_true', help= style.GREEN("Listing all services") + style.RESET(''))
-optional.add_argument("-e", "--emulate", dest="emulate", metavar=style.CYAN("0-9") + style.RESET(''), help= style.GREEN("Emulate a service from list (use --list-all)") + style.RESET(''))
+optional.add_argument("-e", "--emulate", dest="emulate", metavar=style.CYAN("Service") + style.RESET(''), help= style.GREEN("Emulate a service from list (use --list-all)") + style.RESET(''))
 optional.add_argument("-t", "--type", dest="stype", metavar=style.CYAN("metadata|js|scripts|html|headers|cookies") + style.RESET(''), help= style.GREEN("Service fuzz types") + style.RESET(''))
 optional.add_argument("-im", "--imply", dest="imply", metavar=style.CYAN("Apache|Python|PHP|Perl") + style.RESET(''), help= style.GREEN("Imply language / tech-stack") + style.RESET(''))
 # optional.add_argument("-in", "--inject", dest="inject", metavar=style.CYAN("'/path/to/file'") + style.RESET(''), help= style.GREEN("Inject file path") + style.RESET(''))
@@ -96,58 +102,59 @@ optional.add_argument("-o", "--out", dest="output", metavar=style.CYAN("html|txt
 optional.add_argument("-u", "--update", dest="update", action='store_true', help= style.GREEN("Fetching Latest Wappalyzer Mapping") + style.RESET(''))
 
 args = parser.parse_args()
-out_file = args.output
 print(style.GREEN(banner) + style.RESET(''))
-
+out_file = args.output
 # UPDATE AND QUIT #
 if args.update:
     UpdateJSON()
     sys.exit(1)
 
-# Local Load
-print("Loading AliasIO/Wappalyzer JSON ...")
+print(style.YELLOW("[*] Loading AliasIO/Wappalyzer JSON ...")+style.RESET(''))
 with open('src/apps.json') as f:
     data = json.load(f)
+apps = data['apps']
 
-def tryLoad(file):
-    try:
-        return open(file.strip(), 'w')
-    except:
-        print('Permission Denied : {}'.format(file))
-        sys.exit(0)
+
+def regex2str(input): # input => dict
+    value = next(iter(input.values())) # value => dict_keys --> str
+    while True:
+        try:
+            ret = rstr.xeger(value)
+            if len(ret) < len(input) + 15: # dirty way for retricting rstr from exploding
+                return ret
+                break;
+        except:
+            pass
 
 def brain(bools, data):
  if bools.fuzz:
     print("[*] Fuzzer param was selected ...")
-    counter = 0
     for service in data['apps'].items():
         # tdqm implementation
-        counter+=1
         name, website, imply, headers, meta, html, js, scripts, cookies = get_data(service)
-        print("Name => %s (%s)" % (name, website))
-        print("%s-%s-%s-%s-%s-%s-%s" % (imply, headers, meta, html, js, scripts, cookies))
-    print("Total number of services found in apps.json : %d" % counter)
+        meta = next(iter(input.keys())) + regex2str(meta)
+        html = regex2str(html)
+        client, server
+        
 
-    print('lots and lots of fuzzer info')
+    print("Total number of services found in apps.json : %d" % counter)
 
  elif bools.list_all:
     print(style.CYAN("[+] Parsing successful, Wappalyzer instance correctly initialized.") + style.RESET(''))
     print(style.YELLOW("[*] Listing all the services ...") + style.RESET(''))
-    counter = 0
-    for service in data['apps'].items():
-        counter+=1
+    for num,service in enumerate(data['apps'].items()):
         name, website, imply, headers, meta, html, js, scripts, cookies = get_data(service)
-        print("SERVICE NAME => %s (%s)" % (style.CYAN(name)+style.RESET(''), style.YELLOW(website)+style.RESET('')))
+        print("SERVICE NAME [%s] => %s (%s)" % (style.GREEN(num + 1)+style.RESET(''), style.CYAN(name)+style.RESET(''), style.GREEN(website)+style.RESET('')))
         print("    ---- Implies => %s\n    ---- HTTP Headers => %s\n    ---- METADATA => %s\n    ---- HTML => %s\n    ---- JS => %s\n    ---- SCRIPTS => %s\n    ---- Cookies => %s" % (style.RED(imply)+style.RESET(''), style.YELLOW(headers)+style.RESET(''), style.CYAN(meta)+style.RESET(''), style.YELLOW(html)+style.RESET(''), style.RED(js)+style.RESET(''), style.YELLOW(scripts)+style.RESET(''), style.MAGENTA(cookies)+style.RESET('')))
-    print(style.YELLOW("[*] Total number of services found in apps.json : {}".format(counter))  + style.RESET(''))
-    print(style.CYAN("[+] Comamnd successful, Exiting.") + style.RESET(''))
+    print(style.YELLOW("[*] Total number of services found in apps.json : {}".format(style.GREEN(num + 1)+style.RESET('')))  + style.RESET(''))
+    print(style.GREEN("[+] Comamnd successful, Exiting.") + style.RESET(''))
     sys.exit(1)
  elif bools.random:
-    print("[*] Random was selected all the services ...")
-    data
-    # lots and lots of listings, quit
-    print("[+] Login successful, Github instance correctly initialized.")
-    print("[!] Wrong credentials, exiting ...")
+    print("[*] Random flag was selected ...")
+    rand = random.randrange(0, len(apps))
+    service = apps[list(apps)[rand]]
+    print("[*] Selected random service, generating fuzzing data ...")
+    print("[+] Done.")
 
  else:
     print("No parameter was provided (use [-h] flag for help), exiting ...")
@@ -155,11 +162,11 @@ def brain(bools, data):
 
 
 if not out_file: # (not None)
-    html, server = brain(args, data)
+    client, server = brain(args, data)
     print(out) # server part / html
     # write evrything to stdout directory
 if out_file:
-    html, server = brain(args, data)
+    client, server = brain(args, data)
     out_file = tryLoad(out_file)
     out_file.write(out)
     print('Written to {}'.format(out_file))

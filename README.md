@@ -1,5 +1,10 @@
 # Wapparalyser
 
+![License](https://img.shields.io/github/license/0x48piraj/wapparalyser)
+![Version: 1.0](https://img.shields.io/badge/version-1.0-blue.svg)
+![Commits](https://img.shields.io/github/commit-activity/y/0x48piraj/wapparalyser)
+![GitHub issues](https://img.shields.io/github/issues/0x48piraj/wapparalyser)
+
 <p align="center">
     <img alt="Wapparalyser Logo" src="assets/logo.jpg"><br>
     <i>Fuzzing 'n' Fooling Wappalyzer</i>
@@ -32,7 +37,7 @@ Wapparalyser will have an interactive web-app in near future.
 
 ## Install
 
-The project provides a script that will run a Wapparalyser instance isolated from the rest of your system by using file-less/memory-based execution.
+Run the Wapparalyser instance isolated from the rest of your system by using memory-based execution:
 
 ```
 curl -sSL https://raw.githubusercontent.com/0x48piraj/wapparalyser/master/src/cmdline/cli.py | python

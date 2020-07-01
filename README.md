@@ -17,16 +17,15 @@ Wapparalyser has been completely written from the ground-up, after reverse-engin
 
 #### Features
 
-◆ Emulating services
-● Random
-● All
-● Certain tech-stack (e.g. MEAN, LAMP, LAMB, DONKEY?)
+- Emulating services
+   * All
+   * Random
+   * Certain tech-stack (e.g. MEAN, LAMP, LAMB, DONKEY?)
+- In-built small fuzzer for Wappalyzer
+   * Blind
+   * metadata|js|scripts|html|headers|cookies
 
-➔ In-built small fuzzer for Wappalyzer
-● Blind
-● metadata|js|scripts|html|headers|cookies
-
-Some additional features:
+➔ **Some additional features**
 
 - No website modification or lengthy patches
 - Simple user interface and several logging features

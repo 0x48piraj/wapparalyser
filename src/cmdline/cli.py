@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import json, ast
 from pprint import pprint
+import strgen, exrex
 import rstr # https://bitbucket.org/leapfrogdevelopment/rstr/src
 import re, random
 import os, sys, argparse, textwrap, requests, datetime, operator
@@ -39,6 +40,12 @@ banner = textwrap.dedent('''\
     '==================================================================='
     ''')
 
+cookieJSblob = """document.cookie = "%s=%s""" # name:val pair
+metadJSblob  = """<meta %s='%s'>""" # attr:val pair
+scriptJSblob = """<script src="%s"></script>"""
+htmlJSblob   = """%s""" # blob, sometimes []
+jsJSblob     = """<script type="text/javascript">%s</script>"""
+
 def tryLoad(file):
     try:
         return open(file.strip(), 'w')
@@ -56,13 +63,15 @@ def UpdateJSON():
 
 def regex2str(value): # input => str
     if value is not None:
-        ret = ""
-        while len(ret) < len(value) + 15: # dirty way for retricting rstr from exploding, tweaking left
-            try:
-                ret = rstr.xeger(value)
-                return ret
-            except:
-                pass
+        # ret = ""
+        ret = exrex.getone(value)
+        return ret
+        # while len(ret) < len(value) + 15: # dirty way for retricting rstr from exploding, tweaking left
+        #     try:
+        #         ret = rstr.xeger(value)
+        #         return ret
+        #     except:
+        #         pass
     else:
         return None
 
@@ -85,10 +94,9 @@ def brain(bools, data):
     for service in apps.items():
         # tdqm implementation
         name, website, imply, headers, meta, html, js, scripts, cookies = get_data(service)
-        meta = metaParse(meta)
-        html = regex2str(html)
         print(meta)
-        print(html)
+        #meta = metaParse(meta)
+        #html = regex2str(html)
         # client, server
         
     print("Total number of services found in apps.json : %d" % counter)

@@ -12,7 +12,7 @@
 
 Wapparalyser is a security tool for blue-teams which defeats [Wappalyzer](https://www.wappalyzer.com/), a common red-team tool that uncovers the technologies used on websites.
 
-Wapparalyser was presented at BSides Delhi 2019. The command-line tool is built on Python and it has been completely written from the ground-up, after reverse-enginnering Wappalyzer to it's core and thus, it is highly flexible and automatically adapts without manually inserting any new heuristics/fingerprints. It intercepts all the static detections that Wappalyzer uses in order to camouflage, modify and defeat the tool in real-time.
+Wapparalyser was presented at [BSides Delhi](https://bsidesdelhi.in/) 2019. The command-line tool is built on Python and it has been completely written from the ground-up, after reverse-enginnering Wappalyzer to it's core and thus, it is highly flexible and automatically adapts without manually inserting any new heuristics/fingerprints. It intercepts all the static detections that Wappalyzer uses in order to camouflage, modify and defeat the tool in real-time. To know more, you can head over to [My first security talk — BSides Delhi 2019 Experience](https://blog.0x48piraj.com/my-first-security-talk-bsides-delhi-2019-experience). The blog mostly revolves around the journey.
 
 Wapparalyser will have an interactive web-app in near future.
 

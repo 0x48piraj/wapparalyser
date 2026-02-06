@@ -49,7 +49,7 @@ def register_routes(app):
         if not services:
             return jsonify({"error": "services required"}), 400
 
-        if seed is not None:
+        if seed:
             engine = WapparalyserEngine(engine.services, seed=int(seed))
 
         if isinstance(services, list):
@@ -73,7 +73,7 @@ def register_routes(app):
         if not target or not services:
             return "target and service required", 400
 
-        if seed is not None:
+        if seed:
             engine = WapparalyserEngine(engine.services, seed=int(seed))
 
         service_list = services.split(",")

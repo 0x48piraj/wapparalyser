@@ -11,7 +11,6 @@ from wapparalyser.models import Service
 
 _REGEX_CHARS = re.compile(r"[\\^$.*+?()[\]{}|]")
 
-
 @dataclass(frozen=True)
 class Fingerprint:
     service: str
@@ -39,6 +38,45 @@ class WapparalyserEngine:
 
     def emulate_all(self) -> List[Fingerprint]:
         return [self._fuzz(s) for s in self.services]
+
+    def emulate_stack(self, services: list[str], expand_implies: bool = False) -> Fingerprint:
+        if expand_implies:
+            services = self.expand_implies(services)
+
+        fps = [self.emulate_service(name) for name in services]
+
+        return Fingerprint(
+            service=" + ".join(services),
+            headers=self._merge_dicts(fp.headers for fp in fps),
+            cookies=self._merge_dicts(fp.cookies for fp in fps),
+            meta=self._merge_dicts(fp.meta for fp in fps),
+            html=self._merge_lists(fp.html for fp in fps),
+            scripts=self._merge_lists(fp.scripts for fp in fps),
+            js=self._merge_dicts(fp.js for fp in fps),
+            implies=self._merge_lists(fp.implies for fp in fps),
+        )
+
+    def expand_implies(self, services: list[str]) -> list[str]:
+        expanded = set(services)
+
+        for s in self.services:
+            if s.name in expanded:
+                for implied in s.signature.implies:
+                    expanded.add(implied.split(";")[0])  # strip confidence
+
+        return list(expanded)
+
+    def _merge_dicts(self, items):
+        out = {}
+        for d in items:
+            out.update(d)
+        return out
+
+    def _merge_lists(self, items):
+        out = []
+        for lst in items:
+            out.extend(lst)
+        return out
 
     def _find_service(self, name: str) -> Service:
         for service in self.services:

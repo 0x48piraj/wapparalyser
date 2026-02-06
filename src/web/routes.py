@@ -42,16 +42,21 @@ def register_routes(app):
         engine = current_app.config["ENGINE"]
         data = request.get_json(force=True) or {}
 
-        service = data.get("service")
+        services = data.get("services")
+        expand = data.get("expand_implies", False)
         seed = data.get("seed")
 
-        if not service:
-            return jsonify({"error": "service required"}), 400
+        if not services:
+            return jsonify({"error": "services required"}), 400
 
         if seed is not None:
             engine = WapparalyserEngine(engine.services, seed=int(seed))
 
-        fp = engine.emulate_service(service)
+        if isinstance(services, list):
+            fp = engine.emulate_stack(services, expand_implies=expand)
+        else:
+            fp = engine.emulate_service(services)
+
         result = Normalizer().normalize(fp)
 
         return jsonify(result)
@@ -61,20 +66,23 @@ def register_routes(app):
         engine = current_app.config["ENGINE"]
 
         target = request.args.get("target")
-        service = request.args.get("service")
+        services = request.args.get("services")
+        expand = request.args.get("expand_implies") == "1"
         seed = request.args.get("seed")
 
-        if not target or not service:
+        if not target or not services:
             return "target and service required", 400
 
         if seed is not None:
             engine = WapparalyserEngine(engine.services, seed=int(seed))
 
+        service_list = services.split(",")
+
         # fetch upstream site
         upstream = requests.get(target, timeout=10)
 
         # choose service to emulate
-        fp = engine.emulate_service(service)
+        fp = engine.emulate_stack(service_list, expand_implies=expand)
 
         safe_payload = Normalizer().normalize(fp)
         wrapper = ResponseWrapper(safe_payload)

@@ -56,13 +56,18 @@ class WapparalyserEngine:
             implies=self._merge_lists(fp.implies for fp in fps),
         )
 
-    def expand_implies(self, services: list[str]) -> list[str]:
+    def expand_implies(self, services: List[str]) -> List[str]:
         expanded = set(services)
+        queue = list(services)
 
-        for s in self.services:
-            if s.name in expanded:
-                for implied in s.signature.implies:
-                    expanded.add(implied.split(";")[0])  # strip confidence
+        while queue:
+            name = queue.pop()
+            svc = self._find_service(name)
+            for implied in svc.signature.implies:
+                base = implied.split(";")[0]
+                if base not in expanded:
+                    expanded.add(base)
+                    queue.append(base)
 
         return list(expanded)
 

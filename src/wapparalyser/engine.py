@@ -4,23 +4,11 @@
 import re
 import exrex
 import random
-from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import List, Optional
 
-from wapparalyser.models import Service
+from wapparalyser.models import Fingerprint, Service
 
 _REGEX_CHARS = re.compile(r"[\\^$.*+?()[\]{}|]")
-
-@dataclass(frozen=True)
-class Fingerprint:
-    service: str
-    headers: Dict[str, str]
-    cookies: Dict[str, str]
-    meta: Dict[str, str]
-    html: List[str]
-    scripts: List[str]
-    js: Dict[str, str]
-    implies: List[str]
 
 class WapparalyserEngine:
     def __init__(self, services: List[Service], seed: Optional[int] = None):
@@ -49,7 +37,7 @@ class WapparalyserEngine:
             service=" + ".join(services),
             headers=self._merge_dicts(fp.headers for fp in fps),
             cookies=self._merge_dicts(fp.cookies for fp in fps),
-            meta=self._merge_dicts(fp.meta for fp in fps),
+            meta=self._merge_lists(fp.meta for fp in fps),
             html=self._merge_lists(fp.html for fp in fps),
             scripts=self._merge_lists(fp.scripts for fp in fps),
             js=self._merge_dicts(fp.js for fp in fps),
@@ -96,7 +84,7 @@ class WapparalyserEngine:
             service=service.name,
             headers={k: self._materialize(v) or "1" for k, v in sig.headers.items()},
             cookies={k: self._materialize(v) or "1" for k, v in sig.cookies.items()},
-            meta={k: self._materialize(v) or "true" for k, v in sig.meta.items()},
+            meta=[(k, self._materialize(v) or "true") for k, v in sig.meta.items()],
             html=sig.html,
             scripts=[
                 self._materialize(s) or f"/static/{abs(hash(s)) & 0xffffffff}.js"

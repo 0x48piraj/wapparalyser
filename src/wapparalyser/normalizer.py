@@ -28,7 +28,7 @@ class Normalizer(object):
         return {
             "headers": self._headers(payload.headers),
             "cookies": self._cookies(payload.cookies),
-            "meta": [self._meta(payload.meta)] if payload.meta else [],
+            "meta": self._meta(payload.meta),
             "scripts": self._scripts(payload.scripts),
             "js": self._js(payload.js),
             "html": self._html(payload.html),
@@ -41,20 +41,18 @@ class Normalizer(object):
         # cookies are applied at HTTP layer
         return cookies or {}
 
-    def _meta(self, meta):
+    def _meta(self, meta_items):
         """
-        Render meta tags from key/value pairs.
+        Emit <meta> tags from ordered name/content tuples.
         """
-        tags = []
-        for k, v in meta.items():
-            content = v or "true"
-            tags.append(f'<meta name="{k}" content="{content}">')
-        return "\n".join(tags)
+        return [
+            f'<meta name="{k}" content="{v}">'
+            for k, v in meta_items
+        ]
 
     def _scripts(self, scripts):
         """
-        Only external script URLs.
-        No inline JS allowed here.
+        Emit <script> tags for external URLs only, no inline JS.
         """
         out = []
         for src in scripts or []:

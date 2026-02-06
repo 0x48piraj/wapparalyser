@@ -5,6 +5,17 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
+class Fingerprint:
+    service: str
+    headers: Dict[str, str]
+    cookies: Dict[str, str]
+    meta: List[tuple[str, str]]
+    html: List[str]
+    scripts: List[str]
+    js: Dict[str, str]
+    implies: List[str]
+
+@dataclass(frozen=True)
 class Signature:
     headers: Dict[str, str] = field(default_factory=dict)
     cookies: Dict[str, str] = field(default_factory=dict)

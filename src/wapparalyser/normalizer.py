@@ -4,6 +4,8 @@
 import re
 import html
 
+from wapparalyser.engine import Fingerprint
+
 SAFE_HTML_TAGS = {
     "div", "span", "meta", "link", "section",
     "article", "header", "footer", "nav", "body"
@@ -19,17 +21,17 @@ class Normalizer(object):
     safe, non-executable fingerprint artifacts.
     """
 
-    def normalize(self, payload):
+    def normalize(self, payload: Fingerprint) -> dict:
         """
         Convert a fuzzed payload into response artifacts.
         """
         return {
-            "headers": self._headers(payload.get("headers")),
-            "cookies": self._cookies(payload.get("cookies")),
-            "meta": self._meta(payload.get("meta")),
-            "scripts": self._scripts(payload.get("scripts")),
-            "js": self._js(payload.get("js")),
-            "html": self._html(payload.get("html")),
+            "headers": self._headers(payload.headers),
+            "cookies": self._cookies(payload.cookies),
+            "meta": [self._meta(payload.meta)] if payload.meta else [],
+            "scripts": self._scripts(payload.scripts),
+            "js": self._js(payload.js),
+            "html": self._html(payload.html),
         }
 
     def _headers(self, headers):

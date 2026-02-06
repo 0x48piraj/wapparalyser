@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+import sys
 import textwrap
 import argparse
-import sys
-import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -36,7 +36,6 @@ def parse_args():
     parser.add_argument("-r", "--random", action="store_true", help=style.wrap(style.GREEN, "Emulate a random service"))
     parser.add_argument("-e", "--emulate", metavar="SERVICE", help=style.wrap(style.GREEN, "Emulate a specific service by name"))
     parser.add_argument("-f", "--fuzz", action="store_true", help=style.wrap(style.GREEN, "Fuzz all known Wappalyzer signatures"))
-    parser.add_argument("-t", "--type", metavar="TYPE", choices=["headers", "html", "js", "meta", "cookies", "scripts"], help=style.wrap(style.GREEN, "Restrict fuzzing to a specific detection type"))
     parser.add_argument("-o", "--output", metavar="FILE", help=style.wrap(style.GREEN, "Write output to a file instead of stdout"))
     parser.add_argument("-u", "--update", action="store_true", help=style.wrap(style.GREEN, "Update Wappalyzer signatures from upstream"))
 
@@ -64,17 +63,17 @@ def main():
     if args.list:
         services = engine.list_services()
         for idx, name in enumerate(services, 1):
-            print("[{}] {}".format(idx, name))
+            print(f"[{idx}] {name}")
         return 0
 
     elif args.random:
         result = engine.emulate_random()
 
     elif args.emulate:
-        result = engine.emulate_service(args.emulate, mode=args.type)
+        result = engine.emulate_service(args.emulate)
 
     elif args.fuzz:
-        result = engine.fuzz(mode=args.type)
+        result = engine.emulate_all()
 
     else:
         sys.stderr.write("[-] No action specified. Use -h for help.\n")

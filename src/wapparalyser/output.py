@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import json
+from typing import List
 
-def write_to_stdout(result):
+from wapparalyser.engine import Fingerprint
+
+def write_to_stdout(result: Fingerprint | List[Fingerprint]) -> None:
     if isinstance(result, list):
         for entry in result:
             _print_payload(entry)
@@ -11,26 +14,30 @@ def write_to_stdout(result):
     else:
         _print_payload(result)
 
+def _print_payload(fp: Fingerprint) -> None:
+    print("[*] Service:", fp.service)
 
-def _print_payload(payload):
-    print("[*] Service:", payload.get("service"))
-
-    for section in ("headers", "meta", "html", "js", "scripts", "cookies"):
-        items = payload.get(section)
-        if not items:
+    for name, section in (
+        ("HEADERS", fp.headers),
+        ("META", fp.meta),
+        ("HTML", fp.html),
+        ("JS", fp.js),
+        ("SCRIPTS", fp.scripts),
+        ("COOKIES", fp.cookies),
+        ("IMPLIES", fp.implies),
+    ):
+        if not section:
             continue
 
-        print("\n[+] {}:".format(section.upper()))
-
-        if isinstance(items, dict):
-            for k, v in items.items():
-                print("    {}: {}".format(k, v))
+        print(f"\n[+] {name}:")
+        if isinstance(section, dict):
+            for k, v in section.items():
+                print(f"    {k}: {v}")
         else:
-            for item in items:
-                print("    {}".format(item))
+            for item in section:
+                print(f"    {item}")
 
-
-def write_to_file(result, path):
+def write_to_file(result, path: str) -> None:
     with open(path, "w") as f:
-        json.dump(result, f, indent=2)
+        json.dump(result, f, default=lambda o: o.__dict__, indent=2)
     print("[+] Output written to {}".format(path))

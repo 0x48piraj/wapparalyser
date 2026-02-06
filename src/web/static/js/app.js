@@ -99,3 +99,31 @@ document.getElementById("launch").onclick = () => {
 
   window.open(`/proxy?${params.toString()}`, "_blank");
 };
+
+/* nginx / Caddy export */
+function exportConfig(url) {
+  if (selected.size === 0) return;
+
+  fetch(url, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      services: [...selected]
+    })
+  })
+  .then(r => {
+    if (!r.ok) throw new Error("Export failed");
+    return r.json();
+  })
+  .then(data => {
+    elOutput.textContent = Object.values(data)[0];
+  });
+}
+
+document.getElementById("export-nginx").onclick = () => {
+  exportConfig("/api/export/nginx");
+};
+
+document.getElementById("export-caddy").onclick = () => {
+  exportConfig("/api/export/caddy");
+};

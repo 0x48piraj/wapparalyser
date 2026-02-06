@@ -61,6 +61,51 @@ def register_routes(app):
 
         return jsonify(result)
 
+    @app.route("/api/export/nginx", methods=["POST"])
+    def export_nginx():
+        data = request.get_json(force=True)
+        services = data.get("services")
+
+        if not services:
+            return jsonify({"error": "services required"}), 400
+
+        base_engine = current_app.config["ENGINE"]
+        engine = WapparalyserEngine(base_engine.services)
+
+        fp = engine.emulate_stack(services)
+        headers = fp.headers
+
+        lines = [
+            "location / {",
+            "  proxy_pass http://upstream;",
+        ]
+
+        for k, v in headers.items():
+            lines.append(f'  proxy_set_header {k} "{v}";')
+
+        lines.append("}")
+
+        return jsonify({"nginx": "\n".join(lines)})
+
+    @app.route("/api/export/caddy", methods=["POST"])
+    def export_caddy():
+        data = request.get_json(force=True)
+        services = data.get("services")
+
+        if not services:
+            return jsonify({"error": "services required"}), 400
+
+        base_engine = current_app.config["ENGINE"]
+        engine = WapparalyserEngine(base_engine.services)
+
+        fp = engine.emulate_stack(services)
+
+        lines = []
+        for k, v in fp.headers.items():
+            lines.append(f'header {k} "{v}"')
+
+        return jsonify({"caddy": "\n".join(lines)})
+
     @app.route("/proxy", methods=["GET"])
     def proxy():
         engine = current_app.config["ENGINE"]

@@ -83,6 +83,11 @@ body {
   display: block;
 }
 
+.service.implied {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
 .panel {
   padding: 24px;
   overflow-y: auto;
@@ -112,6 +117,11 @@ body {
   padding: 4px 8px;
   margin: 4px 4px 0 0;
   font-size: 12px;
+}
+
+.stack-item.implied {
+  opacity: 0.7;
+  font-style: italic;
 }
 
 .controls label {

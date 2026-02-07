@@ -1,5 +1,8 @@
 let services = [];
 let selected = new Set();
+let serviceMap = {};
+let impliedMap = {};
+let implied = new Set();
 
 const elGrid = document.getElementById("services");
 const elStack = document.getElementById("selected-stack");
@@ -9,6 +12,13 @@ fetch("/api/services")
   .then(r => r.json())
   .then(data => {
     services = data;
+
+    // build lookup tables
+    data.forEach(s => {
+      serviceMap[s.name] = s;
+      impliedMap[s.name] = (s.implies || []).map(i => i.split(";")[0]);
+    });
+
     renderServices(data);
   });
 
@@ -18,6 +28,8 @@ function renderServices(list) {
   list.forEach(s => {
     const div = document.createElement("div");
     div.className = "service";
+    if (selected.has(s.name)) div.classList.add("selected");
+    if (implied.has(s.name)) div.classList.add("implied");
     const icon = s.icon ? `<img src="/static/icons/${s.icon}" alt="${s.name}">` : "";
     div.innerHTML = `${icon}<span>${s.name}</span>`;
     div.onclick = () => toggleService(s.name, div);
@@ -36,11 +48,41 @@ function toggleService(name, el) {
   renderStack();
 }
 
+function expandImpliedServices(baseServices) {
+  const expanded = new Set(baseServices);
+  const queue = [...baseServices];
+
+  while (queue.length) {
+    const name = queue.pop();
+    const implies = impliedMap[name] || [];
+
+    implies.forEach(dep => {
+      if (!expanded.has(dep)) {
+        expanded.add(dep);
+        queue.push(dep);
+      }
+    });
+  }
+
+  return expanded;
+}
+
 /* Stack view */
 function renderStack() {
   elStack.innerHTML = "";
 
-  if (selected.size === 0) {
+  implied.clear();
+
+  let displaySet = new Set(selected);
+
+  if (document.getElementById("expand-implies").checked) {
+    displaySet = expandImpliedServices(selected);
+    displaySet.forEach(s => {
+      if (!selected.has(s)) implied.add(s);
+    });
+  }
+
+  if (displaySet.size === 0) {
     elStack.textContent = "No services selected";
     elStack.classList.add("empty");
     return;
@@ -48,10 +90,17 @@ function renderStack() {
 
   elStack.classList.remove("empty");
 
-  selected.forEach(name => {
+  displaySet.forEach(name => {
     const tag = document.createElement("span");
     tag.className = "stack-item";
-    tag.textContent = name;
+
+    if (implied.has(name)) {
+      tag.classList.add("implied");
+      tag.textContent = `${name} (implied)`;
+    } else {
+      tag.textContent = name;
+    }
+
     elStack.appendChild(tag);
   });
 }
@@ -126,4 +175,9 @@ document.getElementById("export-nginx").onclick = () => {
 
 document.getElementById("export-caddy").onclick = () => {
   exportConfig("/api/export/caddy");
+};
+
+document.getElementById("expand-implies").onchange = () => {
+  renderStack();
+  renderServices(services);
 };

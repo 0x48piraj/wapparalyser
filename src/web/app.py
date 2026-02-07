@@ -10,6 +10,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from wapparalyser.loader import load_services
 from wapparalyser.engine import WapparalyserEngine
 from web.routes import register_routes
+from web.headless import register_proxy_only
+
+HEADLESS = os.getenv("WAPPARALYSER_HEADLESS") == "1"
 
 def create_app():
     app = Flask(__name__)
@@ -29,7 +32,10 @@ def create_app():
     # attach engine to app
     app.config["ENGINE"] = engine
 
-    register_routes(app)
+    if HEADLESS:
+        register_proxy_only(app)
+    else:
+        register_routes(app)
 
     return app
 

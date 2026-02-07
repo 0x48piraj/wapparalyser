@@ -4,9 +4,13 @@ let serviceMap = {};
 let impliedMap = {};
 let implied = new Set();
 
+const PRESET_KEY = "wapparalyser.presets";
+
 const elGrid = document.getElementById("services");
 const elStack = document.getElementById("selected-stack");
 const elOutput = document.getElementById("output");
+
+refreshPresetList();
 
 fetch("/api/services")
   .then(r => r.json())
@@ -46,6 +50,7 @@ function toggleService(name, el) {
     el.classList.add("selected");
   }
   renderStack();
+  renderServices(services);
 }
 
 function expandImpliedServices(baseServices) {
@@ -180,4 +185,80 @@ document.getElementById("export-caddy").onclick = () => {
 document.getElementById("expand-implies").onchange = () => {
   renderStack();
   renderServices(services);
+};
+
+function loadPresets() {
+  return JSON.parse(localStorage.getItem(PRESET_KEY) || "{}");
+}
+
+function savePresets(presets) {
+  localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+}
+
+function refreshPresetList() {
+  const presets = loadPresets();
+  const select = document.getElementById("preset-list");
+
+  select.innerHTML = `<option value="">Load preset…</option>`;
+
+  Object.keys(presets).forEach(name => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
+  });
+}
+
+document.getElementById("save-preset").onclick = () => {
+  if (selected.size === 0) return;
+
+  const name = document.getElementById("preset-name").value.trim();
+  if (!name) return;
+
+  const presets = loadPresets();
+
+  if (presets[name] && !confirm(`Overwrite existing preset "${name}"?`)) {
+    return;
+  }
+
+  presets[name] = {
+    services: [...selected],
+    expand: document.getElementById("expand-implies").checked,
+    seed: document.getElementById("seed").value || ""
+  };
+
+  savePresets(presets);
+  refreshPresetList();
+
+  document.getElementById("preset-name").value = "";
+};
+
+document.getElementById("preset-list").onchange = (e) => {
+  const name = e.target.value;
+  if (!name) return;
+
+  const presets = loadPresets();
+  const preset = presets[name];
+  if (!preset) return;
+
+  selected.clear();
+  preset.services.forEach(s => selected.add(s));
+
+  document.getElementById("expand-implies").checked = preset.expand;
+  document.getElementById("seed").value = preset.seed || "";
+
+  renderStack();
+  renderServices(services);
+};
+
+document.getElementById("delete-preset").onclick = () => {
+  const select = document.getElementById("preset-list");
+  const name = select.value;
+  if (!name) return;
+
+  const presets = loadPresets();
+  delete presets[name];
+
+  savePresets(presets);
+  refreshPresetList();
 };

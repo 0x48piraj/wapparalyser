@@ -11,13 +11,15 @@ def register_proxy_routes(app):
         services = request.args.get("services")
         expand = request.args.get("expand_implies") == "1"
         seed = request.args.get("seed")
+        seed = int(seed) if isinstance(seed, str) and seed.isdigit() else None
 
         if not target or not services:
             return "target and services required", 400
 
+        services_list = services.split(",")
         return current_app.config["PROXY"].proxied_response(
             target=target,
-            services=services.split(","),
+            services=services_list,
             expand=expand,
             seed=seed
         )

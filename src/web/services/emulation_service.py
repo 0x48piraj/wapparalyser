@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from typing import List, Optional
+
 from wapparalyser.engine import WapparalyserEngine
 from wapparalyser.normalizer import Normalizer
 
@@ -13,7 +15,7 @@ class EmulationService:
         return self.engine.emulate_stack(services).headers
 
     def list_services(self):
-        return [
+        services = [
             {
                 "name": s.name,
                 "icon": s.icon,
@@ -22,17 +24,15 @@ class EmulationService:
             }
             for s in self.engine.services
         ]
+        return sorted(services, key=lambda x: x["name"].lower())
 
-    def emulate(self, services, expand=False, seed=None):
-        engine = self.engine
-        if seed:
-            engine = WapparalyserEngine(engine.services, seed=int(seed))
+    def emulate(self, services: List[str], expand: bool = False, seed: Optional[int] = None):
+        if not isinstance(services, list):
+            raise ValueError("services must be a list")
 
-        if isinstance(services, list):
-            fp = engine.emulate_stack(services, expand_implies=expand)
-        else:
-            fp = engine.emulate_service(services)
+        engine = self.engine if seed is None else WapparalyserEngine(self.engine.services, seed=seed)
 
+        fp = engine.emulate_stack(services, expand_implies=expand)
         return self.normalizer.normalize(fp)
 
     def export_nginx(self, services):

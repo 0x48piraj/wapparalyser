@@ -19,11 +19,14 @@ def register_api_routes(app):
         if not services:
             return {"error": "services required"}, 400
 
+        seed = data.get("seed")
+        seed = int(seed) if isinstance(seed, str) and seed.isdigit() else None
+
         try:
             result = current_app.config["EMU"].emulate(
                 services,
                 expand=data.get("expand_implies", False),
-                seed=data.get("seed")
+                seed=seed
             )
             return jsonify(result)
         except ValueError as e:

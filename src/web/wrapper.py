@@ -25,22 +25,37 @@ class ResponseWrapper(object):
             response.headers[name] = value
         return response
 
-    def apply_html(self, body):
-        injections = []
+    def apply_html(self, body: str) -> str:
+        head_injections = []
+        body_injections = []
 
-        injections.extend(self.payload.get("meta", []))
-        injections.extend(self.payload.get("scripts", []))
-        injections.extend(self.payload.get("js", []))
-        injections.extend(self.payload.get("html", []))
+        head_injections.extend(self.payload.get("meta", []))
+        head_injections.extend(self.payload.get("scripts", [])) # external JS
 
-        if not injections:
+        body_injections.extend(self.payload.get("js", [])) # inline JS globals
+        body_injections.extend(self.payload.get("html", [])) # DOM markers
+
+        if not head_injections and not body_injections:
             return body
 
-        block = STEALTH_STYLE + "\n" + "\n".join(injections)
+        head_block = STEALTH_STYLE + "\n" + "\n".join(head_injections)
+        body_block = "\n".join(body_injections)
 
-        if "</head>" in body:
-            return body.replace("</head>", block + "\n</head>")
-        elif "</body>" in body:
-            return body.replace("</body>", block + "\n</body>")
+        lower = body.lower()
+
+        # inject into head
+        if "</head>" in lower:
+            idx = lower.rfind("</head>")
+            body = body[:idx] + head_block + body[idx:]
         else:
-            return body + block
+            body = head_block + body
+
+        # inject into body
+        lower = body.lower()
+        if "</body>" in lower:
+            idx = lower.rfind("</body>")
+            body = body[:idx] + body_block + body[idx:]
+        else:
+            body += body_block
+
+        return body

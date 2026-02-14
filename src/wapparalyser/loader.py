@@ -10,6 +10,16 @@ from wapparalyser.models import Service, Signature
 
 WAPPALYZER_URL = "https://raw.githubusercontent.com/AliasIO/Wappalyzer/master/src/apps.json"
 
+def _clean_imply(value: str) -> str:
+    # unescape
+    value = value.replace("\\;", ";")
+
+    # strip Wappalyzer metadata (e.g. ";confidence:95")
+    if ";" in value:
+        value = value.split(";", 1)[0]
+
+    return value.strip()
+
 def _as_list(value) -> List[str]:
     if value is None:
         return []
@@ -36,7 +46,7 @@ def load_services(path: str) -> List[Service]:
             html=_as_list(raw.get("html")),
             scripts=_as_list(raw.get("script")),
             js=_as_dict(raw.get("js")),
-            implies=_as_list(raw.get("implies")),
+            implies=[_clean_imply(v) for v in _as_list(raw.get("implies"))],
             excludes=_as_list(raw.get("excludes")),
         )
 

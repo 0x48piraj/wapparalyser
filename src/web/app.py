@@ -9,8 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from wapparalyser.loader import load_services
 from wapparalyser.engine import WapparalyserEngine
-from web.routes import register_routes
-from web.headless import register_proxy_only
+from web.services.emulation_service import EmulationService
+from web.services.proxy_service import ProxyService
 
 HEADLESS = os.getenv("WAPPARALYSER_HEADLESS") == "1"
 
@@ -29,13 +29,21 @@ def create_app():
     services = load_services(apps_path)
     engine = WapparalyserEngine(services)
 
-    # attach engine to app
-    app.config["ENGINE"] = engine
+    emu = EmulationService(engine)
+    proxy = ProxyService(emu)
 
-    if HEADLESS:
-        register_proxy_only(app)
-    else:
-        register_routes(app)
+    app.config["EMU"] = emu
+    app.config["PROXY"] = proxy
+
+    from web.routes_api import register_api_routes
+    from web.routes_proxy import register_proxy_routes
+
+    register_api_routes(app)
+    register_proxy_routes(app)
+
+    if not HEADLESS:
+        from web.routes_ui import register_ui_routes
+        register_ui_routes(app)
 
     return app
 

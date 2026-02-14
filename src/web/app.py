@@ -13,8 +13,6 @@ from wapparalyser.engine import WapparalyserEngine
 from web.services.emulation_service import EmulationService
 from web.services.proxy_service import ProxyService
 
-HEADLESS = os.getenv("WAPPARALYSER_HEADLESS") == "1"
-
 def create_app():
     app = Flask(__name__)
 
@@ -41,10 +39,6 @@ def create_app():
 
     register_api_routes(app)
     register_proxy_routes(app)
-
-    if not HEADLESS:
-        from web.routes_ui import register_ui_routes
-        register_ui_routes(app)
 
     CORS(app, resources={
         r"/api/*": {"origins": "*"},

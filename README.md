@@ -6,7 +6,7 @@
 ![GitHub issues](https://img.shields.io/github/issues/0x48piraj/wapparalyser)
 
 <p align="center">
-    <img alt="Wapparalyser" src="assets/branding/logo.jpg"><br>
+    <img alt="Wapparalyser" src="assets/branding/logo.png"><br>
     <i>Fuzzing 'n' Fooling Wappalyzer</i>
 </p>
 
@@ -145,18 +145,14 @@ The upstream site is never modified.
 
 - Headless proxy mode
 
-For automation and tooling, Wapparalyser can run without UI:
-
-* no templates
-* no JavaScript
-* only `/proxy` exposed
+Wapparalyser runs headless by default, exposing only API and proxy routes.
 
 Perfect for:
 
 * CI pipelines
-* scripted deception
-* red-team infra
-* chaining with curl, mitmproxy, Burp
+* Scripted runs
+* Red-team infra
+* Chaining with curl, mitmproxy, Burp
 
 ## Architecture
 
@@ -235,9 +231,13 @@ pip install -r requirements.txt
 
 ## Usage
 
+Wapparalyser can be used in multiple ways depending on your needs.
+
 While you can use `src/wapparalyser/cli.py` to generate known artifacts and experiment with them in your own application, running the **Wapparalyser proxy web app** gives you the project's capabilities most effectively.
 
-Start the Wapparalyser web application:
+### Web Backend (API + Proxy)
+
+To start the backend:
 
 ```bash
 python3 src/web/app.py
@@ -246,18 +246,55 @@ python3 src/web/app.py
 The service will start on:
 
 ```
-http://localhost:8005
+http://<ip-address>:8005
 ```
 
-This launches an HTTP proxy that injects **deceptive fingerprint artifacts** into outbound responses.
+By default, Wapparalyser runs headless and exposes only:
 
-## Usage
+* REST API endpoints (`/api/v1/*`)
+* Proxy endpoint (`/proxy`)
 
-Wapparalyser operates as a **response-shaping layer**: it fetches a real upstream site, injects synthetic technology fingerprints and returns a modified response to the client.
+### React Frontend (SPA)
 
-Run Wappalyzer **against the proxy endpoint**, not the original site.
+A React frontend is available for interactive use.
 
-The upstream site remains unchanged; everything occurs in-transit.
+#### Configure API base URL
+
+Inside the `frontend/` directory, create a `.env` file:
+
+```
+VITE_API_BASE=http://<ip-address>:8005
+```
+
+Use your backend server's address instead of the example IP.
+
+#### Install dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+### Start development server
+
+```bash
+npm run dev
+```
+
+The React app will start (typically on `http://localhost:5173`) and communicate with the backend via the configured `VITE_API_BASE`.
+
+### Production Build (Optional)
+
+To build the frontend for production:
+
+```bash
+npm run build
+```
+
+This generates a `dist/` folder which can be:
+
+* Served by Flask
+* Or deployed behind a reverse proxy (e.g., nginx)
 
 ## API overview
 
@@ -327,24 +364,6 @@ http://localhost:8005/proxy
 ```
 
 > **Note:** Run Wappalyzer **against the proxy**, not the origin.
-
-## Headless proxy mode
-
-Perfect for:
-
-* CI
-* Red team infra
-* Scripted runs
-* Chaining with mitmproxy / burp / curl
-
-Only `/proxy` is exposed.
-No UI. No templates. No JS.
-
-Run,
-
-```bash
-WAPPARALYSER_HEADLESS=1 python3 src/web/app.py
-```
 
 #### Example
 

@@ -5,11 +5,11 @@ from flask import request, jsonify, current_app
 
 def register_api_routes(app):
 
-    @app.get("/api/services")
+    @app.get("/api/v1/services")
     def list_services():
         return jsonify(current_app.config["EMU"].list_services())
 
-    @app.post("/api/emulate")
+    @app.post("/api/v1/emulate")
     def emulate():
         data = request.get_json(silent=True)
         if not data:
@@ -32,7 +32,7 @@ def register_api_routes(app):
         except ValueError as e:
             return {"error": str(e)}, 400
 
-    @app.post("/api/export/nginx")
+    @app.post("/api/v1/export/nginx")
     def export_nginx():
         data = request.get_json(silent=True)
         if not data or not data.get("services"):
@@ -40,7 +40,7 @@ def register_api_routes(app):
 
         return {"nginx": current_app.config["EMU"].export_nginx(data["services"])}
 
-    @app.post("/api/export/caddy")
+    @app.post("/api/v1/export/caddy")
     def export_caddy():
         data = request.get_json(silent=True)
         if not data or not data.get("services"):

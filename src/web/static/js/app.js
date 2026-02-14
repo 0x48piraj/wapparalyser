@@ -12,7 +12,7 @@ const elOutput = document.getElementById("output");
 
 refreshPresetList();
 
-fetch("/api/services")
+fetch("/api/v1/services")
   .then(r => r.json())
   .then(data => {
     services = data;
@@ -122,7 +122,7 @@ document.getElementById("search").oninput = (e) => {
 document.getElementById("preview").onclick = () => {
   if (selected.size === 0) return;
 
-  fetch("/api/emulate", {
+  fetch("/api/v1/emulate", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
@@ -175,11 +175,11 @@ function exportConfig(url) {
 }
 
 document.getElementById("export-nginx").onclick = () => {
-  exportConfig("/api/export/nginx");
+  exportConfig("/api/v1/export/nginx");
 };
 
 document.getElementById("export-caddy").onclick = () => {
-  exportConfig("/api/export/caddy");
+  exportConfig("/api/v1/export/caddy");
 };
 
 document.getElementById("expand-implies").onchange = () => {

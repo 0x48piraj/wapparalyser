@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Dict, List, Optional
+from enum import Enum
 from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
@@ -33,3 +34,20 @@ class Service:
     website: Optional[str]
     categories: List[int]
     signature: Signature
+
+class EvidenceType(str, Enum):
+    HEADER = "header"
+    COOKIE = "cookie"
+    META = "meta"
+    SCRIPT = "script"
+    HTML = "html"
+    COMMENT = "comment"
+    JS = "js"
+
+@dataclass
+class Evidence:
+    type: EvidenceType
+    tech: str
+    key: Optional[str] = None
+    value: Optional[str] = None
+    version: Optional[str] = None

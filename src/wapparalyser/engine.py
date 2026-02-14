@@ -1,31 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import re
-import exrex
 import random
 from typing import List, Optional
 
 from wapparalyser.models import Fingerprint, Service
-
-_REGEX_CHARS = re.compile(r"[\\^$.*+?()[\]{}|]")
+from wapparalyser.compiler import RuleCompiler
+from wapparalyser.renderer import Renderer
 
 class WapparalyserEngine:
     def __init__(self, services: List[Service], seed: Optional[int] = None):
         self.services = services
         self.random = random.Random(seed)
 
+        self.compiler = RuleCompiler(self.random)
+        self.renderer = Renderer()
+
     def list_services(self) -> List[str]:
         return sorted(s.name for s in self.services)
 
     def emulate_service(self, name: str) -> Fingerprint:
-        return self._fuzz(self._find_service(name))
+        return self._build(self._find_service(name))
 
     def emulate_random(self) -> Fingerprint:
-        return self._fuzz(self.random.choice(self.services))
+        return self._build(self.random.choice(self.services))
 
     def emulate_all(self) -> List[Fingerprint]:
-        return [self._fuzz(s) for s in self.services]
+        return [self._build(s) for s in self.services]
 
     def emulate_stack(self, services: list[str], expand_implies: bool = False) -> Fingerprint:
         if expand_implies:
@@ -79,28 +80,6 @@ class WapparalyserEngine:
                 return service
         raise ValueError(f"Unknown service: {name}")
 
-    def _fuzz(self, service: Service) -> Fingerprint:
-        sig = service.signature
-
-        return Fingerprint(
-            service=service.name,
-            headers={k: self._materialize(v) or "1" for k, v in sig.headers.items()},
-            cookies={k: self._materialize(v) or "1" for k, v in sig.cookies.items()},
-            meta=[(k, self._materialize(v) or "true") for k, v in sig.meta.items()],
-            html=sig.html,
-            scripts=[
-                self._materialize(s) or f"/static/{abs(hash(s)) & 0xffffffff}.js"
-                for s in sig.scripts
-            ],
-            js=sig.js,
-            implies=sig.implies,
-        )
-
-    @staticmethod
-    def _materialize(pattern: str) -> Optional[str]:
-        if not _REGEX_CHARS.search(pattern):
-            return pattern
-        try:
-            return exrex.getone(pattern)
-        except Exception:
-            return None
+    def _build(self, service: Service) -> Fingerprint:
+        evidence = self.compiler.compile(service)
+        return self.renderer.render(service, evidence)

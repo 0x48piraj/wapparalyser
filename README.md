@@ -26,7 +26,7 @@ Wapparalyser originally began as an experimental effort to understand and defeat
 
 The first implementation was intentionally exploratory with rapid prototyping patterns, minimal structure and several partially implemented ideas living side-by-side in a single command-line codebase.
 
-While the system worked and proved the core concept, its structure did not scale with complexity. Fuzzing logic, output generation, transport concerns and presentation were tightly coupled making the behavior difficult to reason about, test or extend.
+While the system worked and proved the core concept, its structure did not scale with complexity. Rule interpretation, artifact generation, transport concerns and presentation were tightly coupled making the behavior difficult to reason about, test or extend.
 
 This rewrite revisits the project with that original intent exploring multiple uncommitted abandoned prototypes and partial implementations. Shockingly, it still works like gangbusters in ~2022~ **2026**. Letting it gather dust would have been a crime.
 
@@ -52,29 +52,18 @@ This makes it useful for:
 * Defensive signal analysis
 * Teaching how fingerprinting actually works
 
-
-Wapparalyser does **not**:
-
-* Patch upstream servers
-* Inject executable JavaScript
-* Rewrite application logic
-* Modify application state
-
-Instead, it:
-
-* Synthesizes *only* the artifacts fingerprinting tools observe
-* Injects them strictly at HTTP and HTML boundaries
-* Keeps all injected content inert and non-invasive
+Wapparalyser only synthesizes the signals fingerprinting tools observe and injects them strictly at HTTP and HTML boundaries. The origin application behavior is never modified.
 
 ## Features
 
-- Stack-based service emulation
-    * Emulate **individual services** _(currently, 1123)_
-    * Emulate **composite stacks** (e.g. LAMP, MEAN, cloud edge stacks)
-    * Combine arbitrary technologies
-    * Merge headers, cookies, scripts, meta, JS globals safely
+### Stack-based service emulation
 
-- Recursive implied technologies
+* Emulate **individual services** _(currently, 1123)_
+* Emulate **composite stacks** (e.g. LAMP, MEAN, cloud edge stacks)
+* Combine arbitrary technologies
+* Merge headers, cookies, scripts, meta, JS globals safely
+
+### Recursive implied technologies
 
 Wappalyzer signatures often imply deeper stacks i.e.
 
@@ -102,15 +91,15 @@ Wapparalyser can:
 
 This produces **multi-layer fingerprints** instead of shallow signals.
 
-- Deterministic mode (seeded fuzzing)
+### Deterministic mode (seeded synthesis)
 
-All fuzzing is driven by regex materialization.
+Synthesis is driven by regex materialization where the artifacts are derived from deterministic seeds.
 
 By supplying a seed, you can:
 
-* reproduce fingerprints exactly
-* share stack configurations
-* keep CI and scripted runs stable
+* Reproduce fingerprints exactly
+* Share stack configurations
+* Keep CI and scripted runs stable
 
 The same seed produces the same fingerprint across:
 
@@ -118,7 +107,7 @@ The same seed produces the same fingerprint across:
 * Proxy
 * Exports
 
-- Featured Web UI
+### Featured Web UI
 
 The web application provides:
 
@@ -132,18 +121,18 @@ The web application provides:
 * nginx / Caddy config export
 * Stack presets
 
-- Transparent HTTP proxy
+### Transparent HTTP proxy
 
-Wapparalyser operates as a **response-shaping proxy**:
+Wapparalyser can also operate as a **response-shaping proxy**:
 
 1. Fetches an upstream website
 2. Generates a synthetic fingerprint
-3. Injects artifacts safely
+3. Injects fingerprint artifacts
 4. Returns a visually identical response
 
 The upstream site is never modified.
 
-- Headless proxy mode
+### Headless proxy mode
 
 Wapparalyser runs headless by default, exposing only API and proxy routes.
 
@@ -156,13 +145,11 @@ Perfect for:
 
 ## Architecture
 
-At the core is a standalone fuzzing engine that:
+Wapparalyser compiles detection rules into concrete evidence which is rendered into HTTP and HTML artifacts.
 
 * Consumes Wappalyzer detection rules
 * Produces structured, technology-agnostic payloads
 * Remains independent of framework concerns
-
-These payloads are then passed through a normalization layer that converts detection rules into **safe, non-executable artifacts** followed by a response wrapper that applies service emulation strictly at HTTP and HTML boundaries.
 
 The system follows a clean proxy flow:
 
@@ -175,7 +162,8 @@ flowchart LR
 
     subgraph Processing["Processing"]
         S1[Select service]
-        N1[Normalize payload]
+        G1[Compilation]
+        N1[Materialization]
     end
 
     subgraph TransportPhase["HTTP boundary injection"]
@@ -184,7 +172,8 @@ flowchart LR
     end
 
     F1 --> S1
-    S1 --> N1
+    S1 --> G1
+    G1 --> N1
     N1 --> I1
     I1 --> R1
 ```
@@ -201,15 +190,31 @@ Each stage has a single responsibility and operates on a well-defined boundary.
 
 ```mermaid
 flowchart LR
-    G1[Detection grammar]
-    E1[Semantic engine]
-    M1[Type-safe materialization]
-    I1[Response injection]
+    subgraph SignatureLayer["Signature layer"]
+        G1[Wappalyzer rules]
+    end
 
-    G1 --> E1
-    E1 --> M1
-    M1 --> I1
-    I1 --> C1[Browser / client]
+    subgraph Compilation["Compilation"]
+        C1[Rule compiler]
+        C2[Evidence graph]
+    end
+
+    subgraph Materialization["Materialization"]
+        R1[Renderer]
+        R2[Fingerprint]
+    end
+
+    subgraph Delivery["Delivery"]
+        P1[Proxy injection]
+        P2[HTTP response]
+    end
+
+    G1 --> C1
+    C1 --> C2
+    C2 --> R1
+    R1 --> R2
+    R2 --> P1
+    P1 --> P2
 ```
 
 The pipeline is intentionally unidirectional; no stage mutates or reinterprets upstream content.
@@ -235,9 +240,9 @@ Wapparalyser can be used in multiple ways depending on your needs.
 
 While you can use `src/wapparalyser/cli.py` to generate known artifacts and experiment with them in your own application, running the **Wapparalyser proxy web app** gives you the project's capabilities most effectively.
 
-### Web Backend (API + Proxy)
+### Backend (API + Proxy)
 
-To start the backend:
+To start the Wapparalyser backend:
 
 ```bash
 python3 src/web/app.py
@@ -254,7 +259,7 @@ By default, Wapparalyser runs headless and exposes only:
 * REST API endpoints (`/api/v1/*`)
 * Proxy endpoint (`/proxy`)
 
-### React Frontend (SPA)
+### React frontend (SPA)
 
 A React frontend is available for interactive use.
 
@@ -283,7 +288,7 @@ npm run dev
 
 The React app will start (typically on `http://localhost:5173`) and communicate with the backend via the configured `VITE_API_BASE`.
 
-### Production Build (Optional)
+### Production build (Optional)
 
 To build the frontend for production:
 
@@ -373,14 +378,13 @@ http://localhost:8005/proxy?target=https://example.com&services=nginx,php&seed=1
 
 ## Notes
 
-* No executable JavaScript is injected
 * No upstream websites / servers are modified
 * All artifacts are inert
 * Designed for research, testing and controlled environments
 
 ## Roadmap & Future work
 
-Wapparalyser intentionally focuses on semantic fingerprint synthesis and safe deception not total traffic interception or browser automation.
+Wapparalyser focuses on semantic fingerprint synthesis rather than total traffic interception or browser automation.
 
 The roadmap below captures both what has been completed and what could be explored next without committing to unnecessary complexity.
 

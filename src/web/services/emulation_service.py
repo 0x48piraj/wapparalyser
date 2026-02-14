@@ -12,7 +12,7 @@ class EmulationService:
         self.normalizer = Normalizer()
 
     def _headers_for(self, services):
-        return self.engine.emulate_stack(services).headers
+        return self.engine.emulate_stack(services, expand_implies=True).headers
 
     def list_services(self):
         services = [

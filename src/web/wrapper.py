@@ -22,7 +22,22 @@ class ResponseWrapper(object):
 
     def apply_headers(self, response):
         for name, value in self.payload.get("headers", {}).items():
-            response.headers[name] = value
+
+            # normalize to list
+            if isinstance(value, str):
+                values = value.splitlines()
+            elif isinstance(value, (list, tuple)):
+                values = value
+            else:
+                values = [str(value)]
+
+            for v in values:
+                v = v.strip()
+                if not v:
+                    continue
+
+                response.headers.add(name, v)
+
         return response
 
     def apply_html(self, body: str) -> str:

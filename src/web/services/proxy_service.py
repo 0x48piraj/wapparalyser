@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import certifi
 import requests
 from flask import make_response
 
@@ -13,7 +14,7 @@ class ProxyService:
     def proxied_response(self, target, services, expand, seed):
         try:
             # fetch upstream site
-            upstream = requests.get(target, timeout=10)
+            upstream = requests.get(target, timeout=10, allow_redirects=True, stream=True, verify=certifi.where())
         except requests.RequestException:
             return "Upstream request failed", 502
 

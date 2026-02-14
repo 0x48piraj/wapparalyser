@@ -45,19 +45,21 @@ class WapparalyserEngine:
         )
 
     def expand_implies(self, services: List[str]) -> List[str]:
-        expanded = set(services)
-        queue = list(services)
+        expanded = list(dict.fromkeys(services))
+        seen = set(expanded)
+        queue = list(expanded)
 
         while queue:
-            name = queue.pop()
+            name = queue.pop(0)
             svc = self._find_service(name)
-            for implied in svc.signature.implies:
-                base = implied.split(";")[0]
-                if base not in expanded:
-                    expanded.add(base)
-                    queue.append(base)
 
-        return list(expanded)
+            for implied in svc.signature.implies:
+                if implied not in seen:
+                    seen.add(implied)
+                    expanded.append(implied)
+                    queue.append(implied)
+
+        return expanded
 
     def _merge_dicts(self, items):
         out = {}

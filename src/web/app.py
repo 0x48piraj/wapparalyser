@@ -4,6 +4,7 @@
 import os
 import sys
 from flask import Flask
+from flask_cors import CORS
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -44,6 +45,11 @@ def create_app():
     if not HEADLESS:
         from web.routes_ui import register_ui_routes
         register_ui_routes(app)
+
+    CORS(app, resources={
+        r"/api/*": {"origins": "*"},
+        r"/proxy": {"origins": "*"}
+    })
 
     return app
 

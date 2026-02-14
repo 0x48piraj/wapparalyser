@@ -1,4 +1,5 @@
 exrex
 requests
 flask
+flask_cors
 certifi
